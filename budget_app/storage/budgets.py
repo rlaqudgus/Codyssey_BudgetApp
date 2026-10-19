@@ -19,11 +19,7 @@ class BudgetStore:
         return self.file.ensure_exists()
 
     def iter_all(self) -> Iterator[Budget]:
-        for record in self.file.stream():
-            try:
-                yield Budget.from_dict(record)
-            except (KeyError, ValueError, TypeError) as exc:
-                raise self.file.corrupted(None, f"예산 레코드 {record}: {exc}") from None
+        yield from self.file.load(Budget.from_dict)
 
     def get(self, month: str) -> Budget | None:
         return next((b for b in self.iter_all() if b.month == month), None)

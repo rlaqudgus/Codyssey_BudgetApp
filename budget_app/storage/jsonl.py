@@ -9,15 +9,16 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from budget_app.decorators import timed
 from budget_app.errors import StorageError
 from budget_app.storage.atomic import atomic_write
 
 Record = dict[str, Any]
+T = TypeVar("T")
 
 
 class JsonlFile:
@@ -34,6 +35,18 @@ class JsonlFile:
 
     def stream(self) -> Iterator[Record]:
         """레코드를 한 줄씩 지연 로딩한다. 빈 줄은 건너뛴다."""
+        for _, record in self._numbered():
+            yield record
+
+    def load(self, convert: Callable[[Record], T]) -> Iterator[T]:
+        """레코드를 모델로 변환하며 스트리밍한다. 변환 실패 시 줄 번호를 담아 보고한다."""
+        for line_no, record in self._numbered():
+            try:
+                yield convert(record)
+            except (KeyError, ValueError, TypeError) as exc:
+                raise self.corrupted(line_no, f"{type(exc).__name__}: {exc}") from None
+
+    def _numbered(self) -> Iterator[tuple[int, Record]]:
         if not self.path.exists():
             return
         with self.path.open("r", encoding="utf-8") as fh:
@@ -46,7 +59,7 @@ class JsonlFile:
                     raise self.corrupted(line_no, exc.msg) from None
                 if not isinstance(record, dict):
                     raise self.corrupted(line_no, "JSON 객체가 아닙니다")
-                yield record
+                yield line_no, record
 
     def append(self, record: Record) -> None:
         with self.path.open("a", encoding="utf-8", newline="\n") as fh:

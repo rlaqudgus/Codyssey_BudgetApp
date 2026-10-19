@@ -25,8 +25,7 @@ class TransactionRepository:
 
     def iter_all(self) -> Iterator[Transaction]:
         """저장 순서대로 거래를 하나씩 yield 한다(스트리밍)."""
-        for record in self.file.stream():
-            yield self._to_model(record)
+        yield from self.file.load(Transaction.from_dict)
 
     def get(self, tx_id: str) -> Transaction | None:
         return next((tx for tx in self.iter_all() if tx.id == tx_id), None)
@@ -112,9 +111,3 @@ class TransactionRepository:
     def _save_sequence(self, number: int) -> None:
         with atomic_write(self.sequence_path) as fh:
             fh.write(json.dumps({"last": number}))
-
-    def _to_model(self, record: Record) -> Transaction:
-        try:
-            return Transaction.from_dict(record)
-        except (KeyError, ValueError, TypeError) as exc:
-            raise self.file.corrupted(None, f"레코드 {record.get('id', '?')}: {exc}") from None

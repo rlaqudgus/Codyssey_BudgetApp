@@ -20,11 +20,7 @@ class RecurringStore:
         return self.file.ensure_exists()
 
     def iter_all(self) -> Iterator[RecurringRule]:
-        for record in self.file.stream():
-            try:
-                yield RecurringRule.from_dict(record)
-            except (KeyError, ValueError, TypeError) as exc:
-                raise self.file.corrupted(None, f"반복 규칙 {record.get('id', '?')}: {exc}") from None
+        yield from self.file.load(RecurringRule.from_dict)
 
     def get(self, rule_id: str) -> RecurringRule | None:
         return next((r for r in self.iter_all() if r.id == rule_id), None)

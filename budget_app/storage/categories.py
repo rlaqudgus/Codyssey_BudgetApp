@@ -26,16 +26,10 @@ class CategoryStore:
         return self.file.ensure_exists()
 
     def names(self) -> list[str]:
-        names: list[str] = []
-        for record in self.file.stream():
-            name = record.get("name")
-            if not isinstance(name, str) or not name:
-                raise self.file.corrupted(None, f"잘못된 카테고리 레코드: {record}")
-            names.append(name)
-        return names
+        return list(self.file.load(_category_name))
 
     def exists(self, name: str) -> bool:
-        return any(record.get("name") == name for record in self.file.stream())
+        return any(n == name for n in self.file.load(_category_name))
 
     def add(self, name: str) -> None:
         self.file.append({"name": name})
@@ -49,3 +43,10 @@ class CategoryStore:
             return ()
         self.file.rewrite({"name": n} for n in DEFAULT_CATEGORIES)
         return DEFAULT_CATEGORIES
+
+
+def _category_name(record: dict[str, object]) -> str:
+    name = record["name"]
+    if not isinstance(name, str) or not name:
+        raise ValueError(f"잘못된 카테고리 이름: {name!r}")
+    return name
