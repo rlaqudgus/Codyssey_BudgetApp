@@ -5,14 +5,20 @@ from __future__ import annotations
 from collections import Counter
 
 from budget_app.errors import ConflictError, NotFoundError, ValidationError
-from budget_app.storage import CategoryStore, TransactionRepository
+from budget_app.storage import CategoryStore, RecurringStore, TransactionRepository
 from budget_app.validators import normalize_category
 
 
 class CategoryService:
-    def __init__(self, store: CategoryStore, transactions: TransactionRepository) -> None:
+    def __init__(
+        self,
+        store: CategoryStore,
+        transactions: TransactionRepository,
+        recurring: RecurringStore | None = None,
+    ) -> None:
         self.store = store
         self.transactions = transactions
+        self.recurring = recurring
 
     def names(self) -> list[str]:
         return self.store.names()
@@ -44,8 +50,9 @@ class CategoryService:
         return name
 
     def usage_count(self, raw: str) -> int:
+        """해당 카테고리를 참조하는 거래 + 반복 규칙 수."""
         name = self._existing(raw)
-        return self.transactions.count_by_category(name)
+        return self._usage(name)
 
     def remove(self, raw: str, replacement: str | None = None) -> int:
         """카테고리를 삭제하고 대체 카테고리로 옮긴 거래 수를 반환한다.
@@ -53,12 +60,12 @@ class CategoryService:
         사용 중인 거래가 있는데 대체 카테고리가 없으면 삭제를 막는다(데이터 보호).
         """
         name = self._existing(raw)
-        used = self.transactions.count_by_category(name)
+        used = self._usage(name)
         moved = 0
         if used:
             if replacement is None:
                 raise ConflictError(
-                    f"'{name}' 카테고리를 사용하는 거래가 {used}건 있어 삭제할 수 없습니다.",
+                    f"'{name}' 카테고리를 사용하는 거래/반복 규칙이 {used}건 있어 삭제할 수 없습니다.",
                     f"대체 카테고리를 지정하세요. 예: category remove --name {name} --replace etc",
                 )
             target = self.require(replacement)
@@ -68,8 +75,16 @@ class CategoryService:
                     "다른 카테고리를 대체 카테고리로 지정하세요.",
                 )
             moved = self.transactions.recategorize(name, target)
+            if self.recurring is not None:
+                moved += self.recurring.recategorize(name, target)
         self.store.remove(name)
         return moved
+
+    def _usage(self, name: str) -> int:
+        used = self.transactions.count_by_category(name)
+        if self.recurring is not None:
+            used += self.recurring.count_by_category(name)
+        return used
 
     def _existing(self, raw: str) -> str:
         name = normalize_category(raw)

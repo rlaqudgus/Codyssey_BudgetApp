@@ -102,6 +102,16 @@ def normalize_category(raw: str) -> str:
     return name
 
 
+def parse_day(raw: str) -> int:
+    text = raw.strip()
+    if not text.isdigit() or not 1 <= int(text) <= 31:
+        raise ValidationError(
+            f"반복 날짜는 1~31 사이의 정수여야 합니다: {raw!r}",
+            "예: 25 (해당 월에 없는 날짜면 말일에 생성됩니다)",
+        )
+    return int(text)
+
+
 def parse_positive_int(raw: str, *, name: str = "값") -> int:
     text = raw.strip()
     if not text.isdigit() or int(text) <= 0:

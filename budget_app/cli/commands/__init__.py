@@ -11,6 +11,7 @@ from budget_app.cli.commands import (
     category,
     delete,
     listing,
+    recurring,
     search,
     summary,
     transfer,
@@ -27,5 +28,6 @@ COMMAND_MODULES: tuple[ModuleType, ...] = (
     budget,
     transfer,
     category,
+    recurring,
     backup,
 )

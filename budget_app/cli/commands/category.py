@@ -62,7 +62,7 @@ def run_remove(args: argparse.Namespace, ctx: AppContext) -> int:
     replacement: str | None = args.replace
     used = service.usage_count(name)
     if used and replacement is None:
-        print_info(f"'{name}' 카테고리를 사용하는 거래가 {used}건 있습니다.")
+        print_info(f"'{name}' 카테고리를 사용하는 거래/반복 규칙이 {used}건 있습니다.")
         replacement = ask_text("거래를 옮길 대체 카테고리 (취소하려면 엔터): ") or None
         if replacement is None:
             raise AppError(
@@ -71,7 +71,7 @@ def run_remove(args: argparse.Namespace, ctx: AppContext) -> int:
             )
     moved = service.remove(name, replacement)
     if moved:
-        print_done(f"category={name} 삭제 (거래 {moved}건 -> {replacement} 로 이동)")
+        print_done(f"category={name} 삭제 ({moved}건 -> {replacement} 로 이동)")
     else:
         print_done(f"category={name} 삭제")
     return 0

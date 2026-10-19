@@ -47,6 +47,7 @@ class NewTransaction:
     category: str
     memo: str = ""
     tags: tuple[str, ...] = ()
+    source: str | None = None  # 반복 규칙으로 생성된 경우 "RC-001@2024-01"
 
     def with_id(self, tx_id: str) -> Transaction:
         return Transaction(
@@ -57,6 +58,7 @@ class NewTransaction:
             category=self.category,
             memo=self.memo,
             tags=self.tags,
+            source=self.source,
         )
 
 
@@ -71,6 +73,7 @@ class Transaction:
     category: str
     memo: str = ""
     tags: tuple[str, ...] = ()
+    source: str | None = None  # 반복 규칙으로 생성된 경우 "RC-001@2024-01"
 
     @property
     def month(self) -> str:
@@ -83,7 +86,7 @@ class Transaction:
         return (self.date, parse_tx_number(self.id) or 0)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        record: dict[str, Any] = {
             "id": self.id,
             "type": self.type.value,
             "date": self.date.isoformat(),
@@ -92,6 +95,9 @@ class Transaction:
             "memo": self.memo,
             "tags": list(self.tags),
         }
+        if self.source:
+            record["source"] = self.source
+        return record
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Transaction:
@@ -107,6 +113,7 @@ class Transaction:
             category=str(data["category"]),
             memo=str(data.get("memo") or ""),
             tags=tuple(str(t) for t in data.get("tags") or ()),
+            source=data.get("source") or None,
         )
 
 
@@ -146,3 +153,51 @@ class Budget:
         if not isinstance(amount, int) or amount <= 0:
             raise ValueError(f"잘못된 예산 금액: {amount!r}")
         return cls(month=str(data["month"]), amount=amount)
+
+
+RC_ID_PREFIX = "RC-"
+
+
+@dataclass(frozen=True)
+class RecurringRule:
+    """매달 반복되는 거래 규칙(월급, 월세 등)."""
+
+    id: str  # RC-001
+    day: int  # 1~31, 해당 월에 그 날짜가 없으면 말일로 생성
+    type: TxType
+    amount: int
+    category: str
+    memo: str = ""
+    tags: tuple[str, ...] = ()
+
+    def source_key(self, month: str) -> str:
+        """같은 규칙이 같은 달에 두 번 생성되지 않도록 거래에 남기는 출처 키."""
+        return f"{self.id}@{month}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "day": self.day,
+            "type": self.type.value,
+            "amount": self.amount,
+            "category": self.category,
+            "memo": self.memo,
+            "tags": list(self.tags),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RecurringRule:
+        day, amount = data["day"], data["amount"]
+        if not isinstance(day, int) or not 1 <= day <= 31:
+            raise ValueError(f"잘못된 반복 날짜: {day!r}")
+        if not isinstance(amount, int) or amount <= 0:
+            raise ValueError(f"잘못된 금액: {amount!r}")
+        return cls(
+            id=str(data["id"]),
+            day=day,
+            type=TxType(data["type"]),
+            amount=amount,
+            category=str(data["category"]),
+            memo=str(data.get("memo") or ""),
+            tags=tuple(str(t) for t in data.get("tags") or ()),
+        )

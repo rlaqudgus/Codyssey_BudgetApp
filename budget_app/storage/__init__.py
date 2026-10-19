@@ -2,6 +2,7 @@
 
 from budget_app.storage.budgets import BudgetStore
 from budget_app.storage.categories import CategoryStore
+from budget_app.storage.recurring import RecurringStore
 from budget_app.storage.transactions import TransactionRepository
 
-__all__ = ["BudgetStore", "CategoryStore", "TransactionRepository"]
+__all__ = ["BudgetStore", "CategoryStore", "RecurringStore", "TransactionRepository"]

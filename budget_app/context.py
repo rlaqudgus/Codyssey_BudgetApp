@@ -15,9 +15,10 @@ from budget_app.services.backup_service import BackupService
 from budget_app.services.budget_service import BudgetService
 from budget_app.services.category_service import CategoryService
 from budget_app.services.csv_service import CsvTransferService
+from budget_app.services.recurring_service import RecurringService
 from budget_app.services.report_service import ReportService
 from budget_app.services.transaction_service import TransactionService
-from budget_app.storage import BudgetStore, CategoryStore, TransactionRepository
+from budget_app.storage import BudgetStore, CategoryStore, RecurringStore, TransactionRepository
 
 
 @dataclass
@@ -26,6 +27,7 @@ class AppContext:
     transactions: TransactionRepository
     categories: CategoryStore
     budgets: BudgetStore
+    recurring: RecurringStore
     notices: list[str] = field(default_factory=list)
 
     @classmethod
@@ -42,13 +44,14 @@ class AppContext:
             transactions=TransactionRepository(data_dir),
             categories=CategoryStore(data_dir),
             budgets=BudgetStore(data_dir),
+            recurring=RecurringStore(data_dir),
         )
         ctx._initialize()
         return ctx
 
     @cached_property
     def category_service(self) -> CategoryService:
-        return CategoryService(self.categories, self.transactions)
+        return CategoryService(self.categories, self.transactions, self.recurring)
 
     @cached_property
     def transaction_service(self) -> TransactionService:
@@ -70,10 +73,14 @@ class AppContext:
     def backup_service(self) -> BackupService:
         return BackupService(self.data_dir)
 
+    @cached_property
+    def recurring_service(self) -> RecurringService:
+        return RecurringService(self.recurring, self.transactions, self.category_service)
+
     def _initialize(self) -> None:
         created = [
             store.file.path.name
-            for store in (self.transactions, self.categories, self.budgets)
+            for store in (self.transactions, self.categories, self.budgets, self.recurring)
             if store.ensure_exists()
         ]
         if created:
