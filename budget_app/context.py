@@ -11,6 +11,7 @@ from functools import cached_property
 from pathlib import Path
 
 from budget_app.errors import StorageError
+from budget_app.services.backup_service import BackupService
 from budget_app.services.budget_service import BudgetService
 from budget_app.services.category_service import CategoryService
 from budget_app.services.csv_service import CsvTransferService
@@ -64,6 +65,10 @@ class AppContext:
     @cached_property
     def csv_service(self) -> CsvTransferService:
         return CsvTransferService(self.transactions, self.category_service)
+
+    @cached_property
+    def backup_service(self) -> BackupService:
+        return BackupService(self.data_dir)
 
     def _initialize(self) -> None:
         created = [

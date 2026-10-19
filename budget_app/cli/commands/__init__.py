@@ -6,6 +6,7 @@ from types import ModuleType
 
 from budget_app.cli.commands import (
     add,
+    backup,
     budget,
     category,
     delete,
@@ -26,4 +27,5 @@ COMMAND_MODULES: tuple[ModuleType, ...] = (
     budget,
     transfer,
     category,
+    backup,
 )
