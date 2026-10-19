@@ -12,6 +12,7 @@ from pathlib import Path
 
 from budget_app.errors import StorageError
 from budget_app.services.category_service import CategoryService
+from budget_app.services.transaction_service import TransactionService
 from budget_app.storage import BudgetStore, CategoryStore, TransactionRepository
 
 
@@ -44,6 +45,10 @@ class AppContext:
     @cached_property
     def category_service(self) -> CategoryService:
         return CategoryService(self.categories, self.transactions)
+
+    @cached_property
+    def transaction_service(self) -> TransactionService:
+        return TransactionService(self.transactions, self.category_service)
 
     def _initialize(self) -> None:
         created = [
