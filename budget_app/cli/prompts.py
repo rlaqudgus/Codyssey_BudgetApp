@@ -36,7 +36,7 @@ def read_line(prompt: str) -> str:
     try:
         return input(prompt)
     except EOFError:
-        print()
+        print(flush=True)  # 프롬프트 줄을 닫고, stderr 오류 메시지보다 먼저 출력되게 한다.
         raise AppError(
             "입력이 끝나 작업을 취소했습니다.",
             "대화형 입력이 필요한 명령입니다. 터미널에서 직접 실행하거나 옵션으로 값을 지정하세요.",
