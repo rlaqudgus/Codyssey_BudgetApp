@@ -7,6 +7,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
 from budget_app.models import NewTransaction, Transaction
+from budget_app.query import SearchCriteria
 from budget_app.services.category_service import CategoryService
 from budget_app.storage import TransactionRepository
 
@@ -49,3 +50,6 @@ class TransactionService:
 
     def latest(self, limit: int) -> ListResult:
         return latest_first(self.repo.iter_all(), limit)
+
+    def search(self, criteria: SearchCriteria, limit: int | None = None) -> ListResult:
+        return latest_first(criteria.filter(self.repo.iter_all()), limit)

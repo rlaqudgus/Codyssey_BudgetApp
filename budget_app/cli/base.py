@@ -87,6 +87,15 @@ def add_group(
     return group
 
 
+def add_criteria_arguments(parser: argparse.ArgumentParser) -> None:
+    """search / export 가 공유하는 기간·카테고리·타입 옵션."""
+    parser.add_argument("--from", dest="date_from", type=arg_date, metavar="YYYY-MM-DD", help="시작일(포함)")
+    parser.add_argument("--to", dest="date_to", type=arg_date, metavar="YYYY-MM-DD", help="종료일(포함)")
+    parser.add_argument("--month", type=arg_month, metavar="YYYY-MM", help="해당 월")
+    parser.add_argument("--category", type=arg_category, help="카테고리")
+    parser.add_argument("--type", type=arg_type, metavar="{income,expense}", help="거래 타입")
+
+
 def _argtype(parse: Callable[[str], T], label: str) -> Callable[[str], T]:
     """ValidationError -> argparse.ArgumentTypeError 로 바꿔 argparse가 오류를 보고하게 한다."""
 
