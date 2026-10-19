@@ -7,9 +7,9 @@ from datetime import date
 
 from budget_app.cli.base import add_command
 from budget_app.cli.prompts import ask, ask_text
-from budget_app.console import print_saved
+from budget_app.console import print_saved, print_warning
 from budget_app.context import AppContext
-from budget_app.models import NewTransaction
+from budget_app.models import NewTransaction, TxType
 from budget_app.validators import parse_amount, parse_date, parse_tags, parse_type
 
 EPILOG = """\
@@ -37,4 +37,11 @@ def run(args: argparse.Namespace, ctx: AppContext) -> int:
     )
     tx = ctx.transaction_service.add(new)
     print_saved(f"id={tx.id}")
+    if tx.type is TxType.EXPENSE:
+        status = ctx.report_service.budget_status(tx.month)
+        if status and status.exceeded:
+            print_warning(
+                f"{status.month} 지출 {status.spent:,}원이 예산 {status.budget:,}원을 초과했습니다 "
+                f"(사용률 {status.usage_rate:.1f}%)."
+            )
     return 0

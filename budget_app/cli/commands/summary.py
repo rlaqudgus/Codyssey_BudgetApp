@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from budget_app.cli.base import add_command, arg_month, arg_positive_int
-from budget_app.cli.views import won
+from budget_app.cli.views import print_budget_status, won
 from budget_app.context import AppContext
 
 DEFAULT_TOP = 3
@@ -29,11 +29,17 @@ def run(args: argparse.Namespace, ctx: AppContext) -> int:
     print(f"=== {summary.month} 요약 ===")
     if not summary.has_data:
         print(f"[데이터 없음] {summary.month} 에 해당하는 거래가 없습니다.")
+        if summary.budget:
+            print_budget_status(summary.budget)
         return 0
 
     print(f"총 수입: {won(summary.income)}")
     print(f"총 지출: {won(summary.expense)}")
     print(f"잔액: {won(summary.balance)}")
+    if summary.budget:
+        print_budget_status(summary.budget)
+    else:
+        print("예산: 미설정 (budget set --month YYYY-MM --amount 금액)")
     print()
     if summary.top_expenses:
         print(f"지출 TOP {args.top}")

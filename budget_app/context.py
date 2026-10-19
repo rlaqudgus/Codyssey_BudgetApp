@@ -11,6 +11,7 @@ from functools import cached_property
 from pathlib import Path
 
 from budget_app.errors import StorageError
+from budget_app.services.budget_service import BudgetService
 from budget_app.services.category_service import CategoryService
 from budget_app.services.report_service import ReportService
 from budget_app.services.transaction_service import TransactionService
@@ -53,7 +54,11 @@ class AppContext:
 
     @cached_property
     def report_service(self) -> ReportService:
-        return ReportService(self.transactions)
+        return ReportService(self.transactions, self.budgets)
+
+    @cached_property
+    def budget_service(self) -> BudgetService:
+        return BudgetService(self.budgets)
 
     def _initialize(self) -> None:
         created = [
