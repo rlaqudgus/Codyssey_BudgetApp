@@ -7,9 +7,11 @@ CLI 명령은 AppContext만 받아서 필요한 서비스를 꺼내 쓴다.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import cached_property
 from pathlib import Path
 
 from budget_app.errors import StorageError
+from budget_app.services.category_service import CategoryService
 from budget_app.storage import BudgetStore, CategoryStore, TransactionRepository
 
 
@@ -38,6 +40,10 @@ class AppContext:
         )
         ctx._initialize()
         return ctx
+
+    @cached_property
+    def category_service(self) -> CategoryService:
+        return CategoryService(self.categories, self.transactions)
 
     def _initialize(self) -> None:
         created = [

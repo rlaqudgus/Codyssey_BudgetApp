@@ -4,4 +4,8 @@ from __future__ import annotations
 
 from types import ModuleType
 
-COMMAND_MODULES: tuple[ModuleType, ...] = ()
+from budget_app.cli.commands import category
+
+COMMAND_MODULES: tuple[ModuleType, ...] = (
+    category,
+)
