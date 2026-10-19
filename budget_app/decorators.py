@@ -24,6 +24,10 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 logger = logging.getLogger("budget_app")
+# 핸들러가 하나도 없으면 logging 의 lastResort 핸들러가 스택트레이스를 stderr 로 출력한다.
+# 항상 NullHandler 를 두고 상위 로거로 전파하지 않아, 로그는 명시적으로 설정한 곳에만 남게 한다.
+logger.addHandler(logging.NullHandler())
+logger.propagate = False
 
 EXIT_INTERRUPTED = 130
 EXIT_UNEXPECTED = 1

@@ -74,7 +74,6 @@ def _configure_stdio() -> None:
 def _configure_logging(data_dir: Path, *, verbose: bool) -> None:
     _close_logging()
     logger.setLevel(logging.INFO)
-    logger.propagate = False
     try:
         data_dir.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(data_dir / LOG_FILENAME, encoding="utf-8")
@@ -87,13 +86,20 @@ def _configure_logging(data_dir: Path, *, verbose: bool) -> None:
         logger.addHandler(file_handler)
     if verbose:
         console = logging.StreamHandler(sys.stderr)
-        console.setFormatter(logging.Formatter("[로그] %(message)s"))
+        console.setFormatter(_ConsoleFormatter())
         logger.addHandler(console)
-    if not logger.handlers:
-        logger.addHandler(logging.NullHandler())
+
+
+class _ConsoleFormatter(logging.Formatter):
+    """콘솔에는 메시지만 출력한다(스택트레이스는 로그 파일에만 남긴다)."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        return f"[로그] {record.getMessage()}"
 
 
 def _close_logging() -> None:
     for handler in list(logger.handlers):
+        if isinstance(handler, logging.NullHandler):
+            continue
         logger.removeHandler(handler)
         handler.close()
