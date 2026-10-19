@@ -6,7 +6,8 @@ import heapq
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
-from budget_app.models import NewTransaction, Transaction
+from budget_app.errors import NotFoundError, ValidationError
+from budget_app.models import NewTransaction, Transaction, TransactionPatch
 from budget_app.query import SearchCriteria
 from budget_app.services.category_service import CategoryService
 from budget_app.storage import TransactionRepository
@@ -53,3 +54,33 @@ class TransactionService:
 
     def search(self, criteria: SearchCriteria, limit: int | None = None) -> ListResult:
         return latest_first(criteria.filter(self.repo.iter_all()), limit)
+
+    def get(self, tx_id: str) -> Transaction:
+        normalized = tx_id.strip().upper()
+        tx = self.repo.get(normalized)
+        if tx is None:
+            raise NotFoundError(
+                f"id={normalized} 거래가 없습니다 (없는 데이터).",
+                "'list' 또는 'search' 로 정확한 거래 id를 확인하세요. 예: TX-000012",
+            )
+        return tx
+
+    def update(self, tx_id: str, patch: TransactionPatch) -> tuple[Transaction, Transaction]:
+        """(수정 전, 수정 후)를 반환한다."""
+        if patch.is_empty:
+            raise ValidationError(
+                "수정할 항목이 없습니다.",
+                "--date/--type/--category/--amount/--memo/--tags 중 하나 이상을 지정하세요.",
+            )
+        before = self.get(tx_id)
+        if patch.category is not None:
+            self.categories.require(patch.category)
+        after = patch.apply(before)
+        if after != before:
+            self.repo.replace(after)
+        return before, after
+
+    def delete(self, tx_id: str) -> Transaction:
+        tx = self.get(tx_id)
+        self.repo.delete(tx.id)
+        return tx

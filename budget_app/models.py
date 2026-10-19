@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, replace
 from datetime import date
 from enum import Enum
 from typing import Any
@@ -108,6 +108,26 @@ class Transaction:
             memo=str(data.get("memo") or ""),
             tags=tuple(str(t) for t in data.get("tags") or ()),
         )
+
+
+@dataclass(frozen=True)
+class TransactionPatch:
+    """update 시 변경할 필드만 담는다(None = 변경 안 함)."""
+
+    type: TxType | None = None
+    date: date | None = None
+    amount: int | None = None
+    category: str | None = None
+    memo: str | None = None
+    tags: tuple[str, ...] | None = None
+
+    @property
+    def is_empty(self) -> bool:
+        return all(getattr(self, f.name) is None for f in fields(self))
+
+    def apply(self, tx: Transaction) -> Transaction:
+        changes = {f.name: getattr(self, f.name) for f in fields(self) if getattr(self, f.name) is not None}
+        return replace(tx, **changes)
 
 
 @dataclass(frozen=True)
