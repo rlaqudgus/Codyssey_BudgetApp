@@ -7,6 +7,7 @@ import argparse
 from budget_app.cli.base import add_command, arg_month, arg_positive_int
 from budget_app.cli.views import print_budget_status, won
 from budget_app.context import AppContext
+from budget_app.formatting import display_width, pad
 
 DEFAULT_TOP = 3
 
@@ -43,8 +44,10 @@ def run(args: argparse.Namespace, ctx: AppContext) -> int:
     print()
     if summary.top_expenses:
         print(f"지출 TOP {args.top}")
+        name_width = max(display_width(c) for c, _ in summary.top_expenses)
+        amount_width = max(display_width(won(t)) for _, t in summary.top_expenses)
         for rank, (category, total) in enumerate(summary.top_expenses, start=1):
-            print(f"{rank}) {category} {won(total)}")
+            print(f"{rank}) {pad(category, name_width)}  {pad(won(total), amount_width, 'right')}")
     else:
         print("지출 내역이 없습니다.")
     return 0

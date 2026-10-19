@@ -9,6 +9,7 @@ from budget_app.cli.prompts import ask, ask_text
 from budget_app.console import print_done, print_info, print_saved
 from budget_app.context import AppContext
 from budget_app.errors import AppError
+from budget_app.formatting import display_width, pad
 from budget_app.validators import normalize_category
 
 EPILOG = """\
@@ -49,9 +50,9 @@ def run_list(args: argparse.Namespace, ctx: AppContext) -> int:
     if not rows:
         print_info("등록된 카테고리가 없습니다. 'category add' 로 추가하세요.")
         return 0
-    width = max(len(name) for name, _ in rows)
+    width = max(display_width(name) for name, _ in rows)
     for name, used in rows:
-        print(f"- {name:<{width}}  (사용 {used}건)")
+        print(f"- {pad(name, width)}  (사용 {used}건)")
     return 0
 
 
