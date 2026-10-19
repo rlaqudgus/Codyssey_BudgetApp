@@ -24,3 +24,7 @@ def format_transaction(tx: Transaction) -> str:
 def print_transactions(items: Sequence[Transaction]) -> None:
     for tx in items:
         print(format_transaction(tx))
+
+
+def won(amount: int) -> str:
+    return f"{amount:,}원"
