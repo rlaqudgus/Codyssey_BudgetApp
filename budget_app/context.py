@@ -13,6 +13,7 @@ from pathlib import Path
 from budget_app.errors import StorageError
 from budget_app.services.budget_service import BudgetService
 from budget_app.services.category_service import CategoryService
+from budget_app.services.csv_service import CsvTransferService
 from budget_app.services.report_service import ReportService
 from budget_app.services.transaction_service import TransactionService
 from budget_app.storage import BudgetStore, CategoryStore, TransactionRepository
@@ -59,6 +60,10 @@ class AppContext:
     @cached_property
     def budget_service(self) -> BudgetService:
         return BudgetService(self.budgets)
+
+    @cached_property
+    def csv_service(self) -> CsvTransferService:
+        return CsvTransferService(self.transactions, self.category_service)
 
     def _initialize(self) -> None:
         created = [

@@ -1,0 +1,7 @@
+date,type,category,amount,memo,tags
+2024-02-01,expense,food,8000,김밥,meal
+2024-02-30,expense,food,8000,없는 날짜,
+2024-02-02,expense,food,-500,음수 금액,
+2024-02-03,refund,food,500,잘못된 타입,
+2024-02-04,expense,coffee,4500,미등록 카테고리,cafe
+2024-02-05,income,salary,3000000,2월 급여,
